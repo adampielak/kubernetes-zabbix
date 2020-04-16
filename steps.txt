@@ -1,0 +1,61 @@
+pre-terraform: create key pair for nodes, create s3 bucket for terraform state, create zabbix secret
+
+terraform init / plan / apply.
+
+aws eks update-kubeconfig --region ap-northeast-2 --name terraform_cluster --role-arn arn:aws:iam::346367625676:role/AustinAdminAccess
+(use arn of role that created the cluster. must have a trust relationship with your awscli user (aws sts get-caller-identity)).
+check and make sure kubectl works.
+
+helm install efs-provisioner stable/efs-provisioner --set efsProvisioner.efsFileSystemId=(####efs file system name####) --set efsProvisioner.awsRegion=ap-northeast-2
+helm install efs-provisioner stable/efs-provisioner --set efsProvisioner.efsFileSystemId=fs-9db291dc --set efsProvisioner.awsRegion=ap-southeast-1
+https://github.com/helm/charts/tree/master/stable/efs-provisioner
+
+kubectl apply -f kube2iam.yaml
+
+istioctl manifest apply
+
+kubectl label namespace default istio-injection=enabled
+
+kubectl edit svc istio-ingressgateway -n istio-system
+add the following lines under ports:
+
+  - name: zabbix
+    port: 10051
+    targetPort: 10051
+  - name: zabbix-web
+    port: 37373
+    targetPort: 37373
+
+kubectl create secret generic zabbix-secret --from-literal=POSTGRES_PASSWORD=hello
+
+(edit zabbix server deployment for singapore role)
+
+kubectl apply -f 5.0
+
+kubectl exec -it (####efs-provisioner pod name#####) sh
+
+vi persistentvolumes/zabbix-server-pgsql-pvc-(####this part will change####)/externalscripts/update_route53_record.py
+(create all externalscripts)
+
+chmod +x persistentvolumes/zabbix-server-pgsql-pvc-(####this part will change####)/externalscripts/*.py
+
+exit
+
+kubectl delete pod (zabbix-server-pgsql) (zabbix-web-nginx-pgsql)
+
+kubectl get svc istio-ingressgateway -n istio-system
+>> copy external-ip (load balancer dns)
+
+>> go to load balancer dns at port 37373 in browser
+http://a23c40c98365b434fb8e3eb21dd84961-471320622.ap-northeast-2.elb.amazonaws.com:37373
+>> default username is Admin, password is zabbix
+
+
+to delete everything:
+
+istioctl manifest generate | kubectl delete -f -
+kubectl delete -f 5.0
+helm uninstall efs-provisioner
+kubectl delete -f kube2iam.yaml
+
+terraform destroy

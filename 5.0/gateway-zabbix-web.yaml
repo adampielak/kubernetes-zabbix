@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: zabbix-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+  - port:
+      number: 37373
+      name: http
+      protocol: http
+    hosts:
+    - "default/*"
+  - port:
+      number: 10051
+      name: zabbix
+      protocol: TCP
+    hosts:
+    - "default/*"

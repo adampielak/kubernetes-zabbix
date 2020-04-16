@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: zabbix-server.external-dns-test.austin.com
+  labels:
+    app: zabbix-server-pgsql
+  name: zabbix-server-pgsql-clusterip
+spec:
+  ports:
+  - port: 10051
+    protocol: TCP
+    targetPort: 10051
+  selector:
+    app: zabbix-server-pgsql

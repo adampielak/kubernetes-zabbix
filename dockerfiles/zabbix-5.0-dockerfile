@@ -1,0 +1,7 @@
+FROM zabbix/zabbix-server-pgsql:centos-trunk
+
+RUN yum install -y epel-release && \
+    yum install -y python36 && \
+    python3.6 -m ensurepip
+
+RUN pip3 install py-zabbix boto3

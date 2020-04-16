@@ -1,0 +1,7 @@
+FROM zabbix/zabbix-server-pgsql:alpine-trunk
+
+USER root
+
+RUN apk add python py-pip
+
+RUN pip install py-zabbix boto3
